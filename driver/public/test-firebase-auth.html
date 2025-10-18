@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست Firebase Phone Auth - Snabb</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .step h2 {
+            color: #059669;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            direction: ltr;
+            text-align: center;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .info {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .info strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚕 تست Snabb Phone Auth</h1>
+        <p class="subtitle">سیستم ورود با Firebase</p>
+        
+        <!-- Step 1: Phone Number -->
+        <div id="step1" class="step">
+            <h2>مرحله 1: وارد کردن شماره تلفن</h2>
+            
+            <div class="info">
+                <strong>شماره‌های تستی Firebase:</strong>
+                • +93 79 912 3456 → کد: 123456<br>
+                • +93 79 910 1112 → کد: 123456<br>
+                • +93 79 856 7909 → کد: 123456
+            </div>
+            
+            <div class="form-group">
+                <label>شماره تلفن:</label>
+                <input 
+                    type="tel" 
+                    id="phoneInput" 
+                    placeholder="+93799123456 یا 0799123456"
+                    maxlength="20"
+                >
+            </div>
+            
+            <button id="sendOtpBtn">ارسال کد تأیید</button>
+            
+            <div id="recaptcha-container"></div>
+        </div>
+        
+        <!-- Step 2: OTP Verification -->
+        <div id="step2" class="step hidden">
+            <h2>مرحله 2: تأیید کد OTP</h2>
+            
+            <div class="info">
+                کد 6 رقمی تأیید به شماره <strong id="sentToPhone"></strong> ارسال شد.
+                <br>
+                برای شماره‌های تستی، کد همیشه <strong>123456</strong> است.
+            </div>
+            
+            <div class="form-group">
+                <label>کد تأیید (6 رقمی):</label>
+                <input 
+                    type="text" 
+                    id="otpInput" 
+                    placeholder="123456"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                >
+            </div>
+            
+            <button id="verifyOtpBtn">تأیید و ورود</button>
+            
+            <button id="changeNumberBtn" style="background: #6b7280; margin-top: 10px;">
+                تغییر شماره تلفن
+            </button>
+        </div>
+        
+        <!-- Success Message -->
+        <div id="successMessage" class="success hidden">
+            ✅ ورود موفقیت‌آمیز بود!<br>
+            <strong>شماره تلفن شما: <span id="userPhone"></span></strong>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="errorMessage" class="error hidden"></div>
+        
+        <!-- Loading -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #6b7280;">در حال پردازش...</p>
+        </div>
+        
+        <div class="back-link">
+            <a href="/login">← بازگشت به صفحه Login اصلی</a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getAuth, 
+            RecaptchaVerifier, 
+            signInWithPhoneNumber 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqWEmIIngkoEjiAUKAcT3rvQGtsvCj3qc",
+            authDomain: "snabb-82415.firebaseapp.com",
+            projectId: "snabb-82415",
+            storageBucket: "snabb-82415.firebasestorage.app",
+            messagingSenderId: "1006448447805",
+            appId: "1:1006448447805:web:c58b45899bcd67aa5d7554",
+            measurementId: "G-V2JM77CH43"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Global variables
+        let confirmationResult = null;
+        let recaptchaVerifier = null;
+
+        // DOM elements
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const phoneInput = document.getElementById('phoneInput');
+        const otpInput = document.getElementById('otpInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const changeNumberBtn = document.getElementById('changeNumberBtn');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+        const sentToPhone = document.getElementById('sentToPhone');
+        const userPhone = document.getElementById('userPhone');
+
+        // Setup reCAPTCHA
+        function setupRecaptcha() {
+            if (!recaptchaVerifier) {
+                recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': (response) => {
+                        console.log('reCAPTCHA solved');
+                    },
+                    'expired-callback': () => {
+                        console.log('reCAPTCHA expired');
+                        showError('reCAPTCHA منقضی شد. لطفاً دوباره تلاش کنید.');
+                    }
+                });
+            }
+        }
+
+        // Show/Hide functions
+        function showLoading() {
+            loading.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loading.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showSuccess() {
+            successMessage.classList.remove('hidden');
+            step1.classList.add('hidden');
+            step2.classList.add('hidden');
+        }
+
+        // Format phone number
+        function formatPhoneNumber(phone) {
+            let formatted = phone.trim();
+            if (!formatted.startsWith('+')) {
+                formatted = '+93' + formatted.replace(/^0+/, '');
+            }
+            return formatted;
+        }
+
+        // Send OTP
+        sendOtpBtn.addEventListener('click', async () => {
+            const phone = phoneInput.value;
+            
+            if (!phone) {
+                showError('لطفاً شماره تلفن را وارد کنید');
+                return;
+            }
+
+            try {
+                showLoading();
+                errorMessage.classList.add('hidden');
+                
+                const formattedPhone = formatPhoneNumber(phone);
+                console.log('Sending OTP to:', formattedPhone);
+                
+                setupRecaptcha();
+                
+                confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+                
+                hideLoading();
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                sentToPhone.textContent = formattedPhone;
+                
+                console.log('OTP sent successfully');
+            } catch (error) {
+                hideLoading();
+                console.error('Error sending OTP:', error);
+                showError('خطا در ارسال کد: ' + error.message);
+                
+                // Reset recaptcha
+                if (recaptchaVerifier) {
+                    recaptchaVerifier.clear();
+                    recaptchaVerifier = null;
+                }
+            }
+        });
+
+        // Verify OTP
+        verifyOtpBtn.addEventListener('click', async () => {
+            const otp = otpInput.value;
+            
+            if (!otp || otp.length !== 6) {
+                showError('لطفاً کد 6 رقمی را وارد کنید');
+                return;
+            }
+
+            try {
+                showLoading();
+                errorMessage.classList.add('hidden');
+                
+                const result = await confirmationResult.confirm(otp);
+                const user = result.user;
+                
+                hideLoading();
+                
+                console.log('Login successful:', user);
+                userPhone.textContent = user.phoneNumber;
+                showSuccess();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error verifying OTP:', error);
+                showError('کد تأیید نادرست است');
+            }
+        });
+
+        // Change number
+        changeNumberBtn.addEventListener('click', () => {
+            step2.classList.add('hidden');
+            step1.classList.remove('hidden');
+            otpInput.value = '';
+            errorMessage.classList.add('hidden');
+        });
+
+        // Enter key support
+        phoneInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendOtpBtn.click();
+            }
+        });
+
+        otpInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyOtpBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
